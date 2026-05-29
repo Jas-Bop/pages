@@ -11,12 +11,6 @@ All issues are tracked on the GitHub Kanban board:
 
 ---
 
-##  Issue Boards
-
-Issues are organized into 6 categories below. Each links to its GitHub issue — replace the `#000` placeholders with real issue numbers as you create them.
-
----
-
 ### Kanban Board
 https://github.com/Jas-Bop/pages/actions
 
