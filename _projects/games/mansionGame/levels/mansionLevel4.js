@@ -25,11 +25,11 @@ class MansionLevel4 {
         // Player
         const sprite_data_player = {
             id: 'Spook',
-            greeting: "Hi, I am Spook.",
+            greeting: "You shouldn't be reading this.",
             src: path + "/images/projects/mansionGame/spookMcWalk.png",
             SCALE_FACTOR: 6,
             STEP_FACTOR: 500,
-            ANIMATION_RATE: 10,
+            ANIMATION_RATE: 11,
             INIT_POSITION: { x: width * 0.1, y: height / 2 },
             pixels: { height: 2400, width: 3600 },
             orientation: { rows: 2, columns: 3 },

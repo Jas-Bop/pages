@@ -11,9 +11,9 @@ class WaveManager {
         this.gameEnv = gameEnv;
         this.waves = [
             { count: 5,  speed: 1.5  },  // Wave 1
-            { count: 8,  speed: 2.0  },  // Wave 2
-            { count: 12, speed: 2.7  },   // Wave 3
-            { count: 16, speed: 3.0  }   // Wave 4
+            { count: 9,  speed: 1.75  },  // Wave 2
+            { count: 11, speed: 2.0  },   // Wave 3
+            { count: 15, speed: 2.5  }   // Wave 4
         ];
 
         this.currentWave = 0;
@@ -116,7 +116,7 @@ class WaveManager {
                 src: sprite_src,
                 SCALE_FACTOR: 5,
                 STEP_FACTOR: 0,
-                ANIMATION_RATE: 8,
+                ANIMATION_RATE: 10,
                 INIT_POSITION: { x: xPos, y: yPos },
                 pixels: { height: 1000, width: 3000 }, // full spritesheet dimensions
                 orientation: { rows: 2, columns: 6 },
