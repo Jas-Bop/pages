@@ -1,74 +1,7 @@
-import Character from '@assets/js/GameEnginev1.1/essentials/Character.js';
 import Projectile from './Projectile.js';
 import Npc from '@assets/js/GameEnginev1.1/essentials/Npc.js';
 import MansionLevelMain from './mansionLevelMain.js';
-class WaveEnemy extends Character {
-    constructor(data = null, gameEnv = null) {
-        super(data, gameEnv);
-        this.healthPoints = data?.healthPoints || 1;
-        this.speed = data?.speed || 2;
-        this.maxHealth = data?.healthPoints || 1;
-        this._isDestroyed = false;
-        this._facingRight = true;
-    }
-
-    update() {
-        if (this._isDestroyed) return;
-
-        const players = this.gameEnv.gameObjects.filter(obj =>
-            obj.constructor.name === 'Player' || obj.constructor.name === 'FightingPlayer'
-        );
-
-        if (players.length > 0) {
-            const player = players[0];
-            const dx = player.position.x - this.position.x;
-            const dy = player.position.y - this.position.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance > 0) {
-                this.position.x += (dx / distance) * this.speed;
-                this.position.y += (dy / distance) * this.speed;
-
-                // Flip animation row based on horizontal movement direction
-                if (dx > 0 && !this._facingRight) {
-                    this._facingRight = true;
-                    if (this.spriteData?.right) this.currentAnimation = this.spriteData.right;
-                } else if (dx < 0 && this._facingRight) {
-                    this._facingRight = false;
-                    if (this.spriteData?.left) this.currentAnimation = this.spriteData.left;
-                }
-            }
-        }
-
-        this.draw();
-    }
-
-    takeDamage(amount) {
-        this.healthPoints -= amount;
-        if (this.healthPoints <= 0 && !this._isDestroyed) {
-            this.destroy();
-        }
-    }
-
-    destroy() {
-        if (this._isDestroyed) return;
-        this._isDestroyed = true;
-
-        // Critical: Character.destroy() removes the canvas element from the DOM
-        super.destroy();
-
-        if (this.gameEnv && this.gameEnv.gameObjects) {
-            const index = this.gameEnv.gameObjects.indexOf(this);
-            if (index > -1) {
-                this.gameEnv.gameObjects.splice(index, 1);
-            }
-        }
-    }
-
-    isDestroyed() {
-        return this._isDestroyed;
-    }
-}
+import WaveEnemy from './WaveEnemy.js';
 
 /**
  * WaveManager - Handles wave logic, enemy spawning, projectiles, and progression
@@ -89,13 +22,16 @@ class WaveManager {
         this.waveStartTime = 0;
         this.npcSpawned = false;
         this._playerDead = false;
+        this.player = null; // Cached player reference
 
         // Projectile system
         this.projectiles = [];
         this.lastAttackTime = Date.now();
-        this.attackCooldown = 500; // 0.25s between shots
+        this.attackCooldown = 1000; // 1s between shots
 
         this.waveDisplay = null;
+        this.lastDisplayedWave = -1;
+        this.lastDisplayedEnemyCount = -1;
     }
 
     startFirstWave() {
@@ -200,8 +136,16 @@ class WaveManager {
     }
 
     update() {
+        // Cache player reference once per frame
+        this.player = this.gameEnv.gameObjects.find(obj =>
+            obj.constructor.name === 'Player' || obj.constructor.name === 'FightingPlayer'
+        ) || null;
+
         // Always update projectiles and check collisions during waves
         if (this.waveActive) {
+            // Update enemies with cached player reference
+            this.waveEnemies.forEach(enemy => enemy.update(this.player));
+
             // Update and cull dead projectiles
             this.projectiles = this.projectiles.filter(p => !p.revComplete);
             this.projectiles.forEach(p => p.update());
@@ -278,16 +222,10 @@ class WaveManager {
     }
 
     checkPlayerCollisions() {
-        if (this._playerDead) return;
+        if (this._playerDead || !this.player) return;
 
-        const players = this.gameEnv.gameObjects.filter(obj =>
-            obj.constructor.name === 'Player' || obj.constructor.name === 'FightingPlayer'
-        );
-        if (players.length === 0) return;
-
-        const player   = players[0];
-        const playerCX = player.position.x + (player.width  || 50) / 2;
-        const playerCY = player.position.y + (player.height || 50) / 2;
+        const playerCX = this.player.position.x + (this.player.width  || 50) / 2;
+        const playerCY = this.player.position.y + (this.player.height || 50) / 2;
 
         for (const enemy of this.waveEnemies) {
             if (enemy.isDestroyed()) continue;
@@ -296,7 +234,7 @@ class WaveManager {
             const dy = playerCY - (enemy.position.y + (enemy.height || 50) / 2);
 
             if (Math.sqrt(dx * dx + dy * dy) <= 40) {
-                this.killPlayer(player);
+                this.killPlayer(this.player);
                 return;
             }
         }
@@ -430,15 +368,10 @@ class WaveManager {
     playerShoot(direction = null) {
         const now = Date.now();
         if (now - this.lastAttackTime < this.attackCooldown) return;
+        if (!this.player) return;
 
-        const players = this.gameEnv.gameObjects.filter(obj =>
-            obj.constructor.name === 'Player' || obj.constructor.name === 'FightingPlayer'
-        );
-        if (players.length === 0) return;
-
-        const player  = players[0];
-        const sourceX = player.position.x + player.width  / 2;
-        const sourceY = player.position.y + player.height / 2;
+        const sourceX = this.player.position.x + this.player.width  / 2;
+        const sourceY = this.player.position.y + this.player.height / 2;
 
         let targetX, targetY;
 
@@ -449,7 +382,7 @@ class WaveManager {
             targetY = sourceY + (direction.dy / len) * 1000;
         } else {
             // Fallback: aim at nearest enemy, or shoot right
-            const nearest = this.getNearestEnemy(player);
+            const nearest = this.getNearestEnemy(this.player);
             targetX = nearest ? nearest.position.x + (nearest.width  || 50) / 2 : sourceX + 500;
             targetY = nearest ? nearest.position.y + (nearest.height || 50) / 2 : sourceY;
         }
@@ -497,11 +430,19 @@ class WaveManager {
         }
 
         const waveIndex = Math.min(this.currentWave, this.waves.length - 1);
-        const wave      = this.waves[waveIndex];
-        this.waveDisplay.innerHTML = `
-            <div>Wave ${Math.min(this.currentWave + 1, this.waves.length)}/${this.waves.length}</div>
-            <div>Enemies remaining: ${this.waveEnemies.length}/${wave.count}</div>
-        `;
+        const wave = this.waves[waveIndex];
+        const currentEnemyCount = this.waveEnemies.length;
+        const displayWave = Math.min(this.currentWave + 1, this.waves.length);
+
+        // Only update DOM if values changed
+        if (this.lastDisplayedWave !== displayWave || this.lastDisplayedEnemyCount !== currentEnemyCount) {
+            this.waveDisplay.innerHTML = `
+                <div>Wave ${displayWave}/${this.waves.length}</div>
+                <div>Enemies remaining: ${currentEnemyCount}/${wave.count}</div>
+            `;
+            this.lastDisplayedWave = displayWave;
+            this.lastDisplayedEnemyCount = currentEnemyCount;
+        }
     }
 
     isComplete() {
@@ -517,4 +458,4 @@ class WaveManager {
     }
 }
 
-export { WaveManager, WaveEnemy };
+export { WaveManager };
