@@ -28,6 +28,14 @@ GameEnginev1.1/
   └── DialogueSystem.js
 ```
 
+Mansion Level 4 is a survival-based combat level built around a custom WaveManager system. When the level starts, the player is shown a menu explaining the controls and objective before the first wave begins. The player controls Spook using WASD and can shoot projectiles with the spacebar, with shots traveling in the direction the player is currently facing.
+
+The WaveManager is responsible for spawning enemies, tracking wave progression, handling projectile collisions, and detecting player death. Ghost enemies spawn randomly along the edges of the map while maintaining a minimum distance from both the player and other enemies to prevent unfair spawns. Each wave increases the number and speed of enemies, creating a progressively more difficult challenge.
+
+During gameplay, projectiles and enemy hitboxes are checked every frame to determine when enemies are defeated. If a ghost reaches the player, a death sequence is triggered that displays visual effects and restarts the level after a short delay. After all four waves have been cleared, a victory NPC appears, allowing the player to return to the mansion hub and unlock the next level.
+
+---
+
 **Key methods to know:**
 
 - `update()` — Called every frame. Handles input, shooting, and checks win condition.

@@ -364,7 +364,6 @@ class WaveManager {
         this.gameEnv.gameObjects.push(npc);
         console.log("Victory NPC spawned");
     }
-
     playerShoot(direction = null) {
         const now = Date.now();
         if (now - this.lastAttackTime < this.attackCooldown) return;
