@@ -40,8 +40,7 @@ GameEnginev1.1/
 
 ## Getting Started (New Contributors)
 
-1. Pick an issue from one of the boards above.
-2. Check the **Project Board** to make sure it's not  being worked on.
+1. Pick an issue from the list that will be shown below.
 3. Create a branch named `issue-###-short-description`.
 4. Test in-browser — the game runs via the main game engine, no build step needed.
 5. Open a PR and link the issue with `Closes #000`.
@@ -49,5 +48,17 @@ GameEnginev1.1/
 > **Tip:** Most logic lives in `WaveManager.js`, not this file. If you're touching enemy behavior, spawning, or projectiles, start there.
 
 ---
+
+## Things To Implement
+
+- Make it so ghosts cannot stack on top of eachother
+- Add a stronger enemy, a Ghoul, which its own unique animation and class attributes
+- Improve the arrow to always shoot the way the sprite is facing
+- Add a new attack
+- Create one more wave (which implements the Ghouls from above)
+- Create a health system for the main character with 3 lives
+- Make enemy spawns such that the enemies do not spawn in overlapping with eachother
+- Give each enemy its own unique speed (call a random number from an array to substitute its speed for example)
+- Implement leaderboard.js to determine how fast someone can beat enemies 
 
 *Last updated by: Rishab S*
