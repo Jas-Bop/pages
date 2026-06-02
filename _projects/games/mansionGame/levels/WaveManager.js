@@ -271,28 +271,73 @@ class WaveManager {
             setTimeout(() => particle.remove(), 1000);
         }
 
-        // Death dialog
+        // Inject horror flicker styling
+        const style = document.createElement('style');
+        style.id = 'death-screen-styles';
+        style.textContent = `
+            @keyframes retroFlicker {
+                0%, 19.9%, 22%, 62.9%, 64%, 64.9%, 70%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(255,0,0,0.6); }
+                20%, 21.9%, 63%, 63.9%, 65%, 69.9% { opacity: 0.4; text-shadow: none; }
+            }
+            @keyframes pulseVignette {
+                0%, 100% { background: radial-gradient(circle, rgba(0,0,0,0.6) 0%, rgba(20,0,0,0.95) 100%); }
+                50% { background: radial-gradient(circle, rgba(30,0,0,0.6) 0%, rgba(0,0,0,0.98) 100%); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Immersive full screen vignette backdrop overlay
+        const overlay = document.createElement('div');
+        Object.assign(overlay.style, {
+            position: 'fixed', inset: '0',
+            zIndex: '9998', animation: 'pulseVignette 2s infinite ease-in-out',
+            pointerEvents: 'auto'
+        });
+        document.body.appendChild(overlay);
+
+        // Death dialog container
         const deathMessage = document.createElement('div');
         Object.assign(deathMessage.style, {
             position: 'fixed', top: '50%', left: '50%',
             transform: 'translate(-50%, -50%)',
-            backgroundColor: 'rgba(0,0,0,0.8)', color: '#FF0000',
-            padding: '30px', borderRadius: '10px',
+            backgroundColor: 'rgba(10, 0, 0, 0.95)', color: '#FF0000',
+            padding: '35px', borderRadius: '10px',
             fontFamily: "'Press Start 2P', sans-serif",
             fontSize: '24px', textAlign: 'center',
             zIndex: '10000', border: '3px solid #FF0000',
-            boxShadow: '0 0 20px rgba(255,0,0,0.5)', width: '400px'
+            boxShadow: '0 0 30px rgba(255,0,0,0.7)', width: '420px'
         });
+
         deathMessage.innerHTML = `
-            <div style="margin-bottom:20px">☠️ YOU DIED ☠️</div>
-            <div style="font-size:16px;margin-bottom:20px">The ghosts got you!</div>
-            <div style="font-size:14px">Respawning in 3 seconds...</div>
+            <div style="margin-bottom:20px; animation: retroFlicker 3s linear infinite;">☠️ YOU DIED ☠️</div>
+            <div style="font-size:15px; margin-bottom:25px; color: #cc3333;">The ghosts got you!</div>
+            <div id="countdown-text" style="font-size:13px; color: #ff6666;">Respawning in 3 seconds...</div>
         `;
         document.body.appendChild(deathMessage);
-        setTimeout(() => deathMessage.remove(), 2000);
 
-        // Restart MansionLevel4
+        // ── LIVE COUNTDOWN LOGIC (3 down to 0) ──
+        let timeLeft = 3;
+        const countdownTimer = setInterval(() => {
+            timeLeft--;
+            const textElement = document.getElementById('countdown-text');
+            if (textElement) {
+                if (timeLeft > 0) {
+                    textElement.innerText = `Respawning in ${timeLeft} second${timeLeft > 1 ? 's' : ''}...`;
+                } else {
+                    textElement.innerText = `Respawning...`;
+                    textElement.style.color = "#ffffff";
+                }
+            }
+            if (timeLeft <= 0) clearInterval(countdownTimer);
+        }, 1000);
+
+        // Restart MansionLevel4 and clean up UI layers
         setTimeout(() => {
+            clearInterval(countdownTimer);
+            deathMessage.remove();
+            overlay.remove();
+            style.remove();
+
             import('./mansionLevel4.js').then(({ default: MansionLevel4 }) => {
                 if (gameControl && typeof gameControl.transitionToLevel === 'function') {
                     gameControl.levelClasses = [MansionLevel4];
