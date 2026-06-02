@@ -10,11 +10,19 @@ class WaveManager {
     constructor(gameEnv) {
         this.gameEnv = gameEnv;
         this.waves = [
-            { count: 5,  speed: 1.5  },  // Wave 1
-            { count: 9,  speed: 1.75  },  // Wave 2
-            { count: 11, speed: 2.0  },   // Wave 3
-            { count: 15, speed: 2.5  }   // Wave 4
-        ];
+    { count: 5,  speed: 1.5 },
+    { count: 9,  speed: 1.75 },
+    { count: 11, speed: 2.0 },
+    { count: 15, speed: 2.5 },
+
+    // Boss Wave
+    {
+        boss: true,
+        count: 1,
+        speed: 1.25,
+        health: 25
+    }
+];
 
         this.currentWave = 0;
         this.waveEnemies = [];
@@ -34,28 +42,31 @@ class WaveManager {
         this.lastDisplayedEnemyCount = -1;
     }
 
-    startFirstWave() {
-        if (this.waveActive) return;
-        this.currentWave = 0;
-        this.startWave();
+startWave() {
+    if (this.currentWave >= this.waves.length) {
+        this.spawnNPC();
+        return;
     }
 
-    startWave() {
-        if (this.currentWave >= this.waves.length) {
-            this.spawnNPC();
-            return;
-        }
+    this.waveActive = true;
+    this.waveStartTime = Date.now();
 
-        this.waveActive = true;
-        this.waveStartTime = Date.now();
-        const wave = this.waves[this.currentWave];
+    const wave = this.waves[this.currentWave];
 
-        this.waveEnemies = [];
+    this.waveEnemies = [];
+
+    if (wave.boss) {
+        this.spawnBossEnemy(wave);
+        console.log("👻 BOSS WAVE STARTED 👻");
+    } else {
         this.spawnWaveEnemies(wave.count, wave.speed);
-        this.updateWaveDisplay();
-
-        console.log(`Wave ${this.currentWave + 1} started — ${wave.count} enemies at speed ${wave.speed}`);
+        console.log(
+            `Wave ${this.currentWave + 1} started — ${wave.count} enemies at speed ${wave.speed}`
+        );
     }
+
+    this.updateWaveDisplay();
+}
 
     spawnWaveEnemies(count, speed) {
         const width  = this.gameEnv.innerWidth;
@@ -134,7 +145,81 @@ class WaveManager {
             this.gameEnv.gameObjects.push(enemy);
         }
     }
+    
+spawnBossEnemy(wave) {
+    const width = this.gameEnv.innerWidth;
+    const height = this.gameEnv.innerHeight;
+    const path = this.gameEnv.path;
 
+    const sprite_src =
+        path + "/images/projects/mansionGame/ghost.png";
+
+    const enemyData = {
+        id: "bossGhost",
+
+        src: sprite_src,
+
+        SCALE_FACTOR: 10,
+
+        STEP_FACTOR: 0,
+
+        ANIMATION_RATE: 10,
+
+        INIT_POSITION: {
+            x: width * 0.85,
+            y: height * 0.5
+        },
+
+        pixels: {
+            height: 1000,
+            width: 3000
+        },
+
+        orientation: {
+            rows: 2,
+            columns: 6
+        },
+
+        left: {
+            row: 0,
+            start: 0,
+            columns: 6
+        },
+
+        right: {
+            row: 1,
+            start: 0,
+            columns: 6
+        },
+
+        up: {
+            row: 0,
+            start: 0,
+            columns: 6
+        },
+
+        down: {
+            row: 1,
+            start: 0,
+            columns: 6
+        },
+
+        hitbox: {
+            widthPercentage: 0.7,
+            heightPercentage: 0.7
+        },
+
+        healthPoints: wave.health,
+
+        speed: wave.speed
+    };
+
+    const boss = new WaveEnemy(enemyData, this.gameEnv);
+
+    this.waveEnemies.push(boss);
+
+    this.gameEnv.gameObjects.push(boss);
+}
     update() {
         // Cache player reference once per frame
         this.player = this.gameEnv.gameObjects.find(obj =>
