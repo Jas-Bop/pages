@@ -42,7 +42,15 @@ class WaveManager {
         this.lastDisplayedEnemyCount = -1;
     }
 
-startWave() {
+    startFirstWave() {
+        if (this.waveActive) return;
+
+        this.currentWave = 0;
+
+        this.startWave();
+    }
+
+    startWave() {
     if (this.currentWave >= this.waves.length) {
         this.spawnNPC();
         return;
@@ -145,7 +153,7 @@ startWave() {
             this.gameEnv.gameObjects.push(enemy);
         }
     }
-    
+
 spawnBossEnemy(wave) {
     const width = this.gameEnv.innerWidth;
     const height = this.gameEnv.innerHeight;
